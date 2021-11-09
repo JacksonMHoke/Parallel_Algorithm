@@ -8,7 +8,36 @@ using namespace std;
 
 static string syncFile = "sync.txt";
 static string dataFile = "data.txt";
-unsigned long long num = 1231231231231200000;
+unsigned long long num = 12312123421342521200;
+
+/*
+    Desc: Returns a vector of all prime factors of n
+
+    Parameters:
+        n: Number to be factored
+
+    Return value: vector of all prime values of n in order to least to greatest
+*/
+vector<unsigned long long> findFactorsVec(unsigned long long n) {
+    vector<unsigned long long> rt;
+    while (n%2==0) {
+        n/=2;
+        rt.push_back(2);
+    }
+
+    int sqrtNum = sqrt(n);
+    for (unsigned long long i=3; i<sqrtNum; i+=2) {
+        if (n%i==0) {
+            n/=i;
+            rt.push_back(i);
+        }
+    }
+
+    if (n>2) {
+        rt.push_back(n);
+    }
+    return rt;
+}
 
 int main () {
     //sync with core1
@@ -16,28 +45,15 @@ int main () {
     fout << "ready";
     fout.close();
     //calculate
-    vector<unsigned long long> data;
-    while (num%2==0) {
-        num/=2;
-        data.push_back(2);
-    }
-
-    unsigned long long sqrtNum = sqrt(num);
-    for (unsigned long long i=3; i<sqrtNum; i+=2) {
-        if (num%i==0) {
-            num/=i;
-            data.push_back(i);
-        }
-    }
-
-    if (num>2) data.push_back(num);
+    vector<unsigned long long> data = findFactorsVec(num);
 
     //upload results to csv1
     remove(dataFile.c_str());
     fout.open(dataFile);
-    for (auto i : data) {
+    for (unsigned long long i : data) {
         fout << i << " ";
     }
+    fout << endl;
     fout.close();
 
     //sync with core1

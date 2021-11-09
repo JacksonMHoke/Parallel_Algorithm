@@ -10,16 +10,86 @@ using namespace std;
 
 static string syncFile = "sync.txt";
 static string dataFile = "data.txt";
-unsigned long long num = 12312123421342521200;
+unsigned long long num1 = 12312123421342521200;
+unsigned long long num2 = 12312123421342521200;
+
+/*
+    Desc: Outputs an unordered_map<unsigned long long, int> of all the frequencies of prime factors in n. Ex: 49 will have
+    map[7]=2
+
+    Paramaters:
+        n: Number to find prime factors of
+
+    Return value: Unordered_map of frequencies of prime factors of n
+*/
+unordered_map<unsigned long long, int> findFactorsMap (unsigned long long n) {
+    unordered_map<unsigned long long, int> mp;
+    while (n%2==0) {
+        cout << 2 << " ";
+        n/=2;
+        mp[2]++;
+    }
+
+    unsigned long long sqrtNum = sqrt(n);
+    for (unsigned long long i=3; i<sqrtNum; i+=2) {
+        if (n%i==0) {
+            cout << i << " ";
+            n/=i;
+            mp[i]++;
+        }
+    }
+
+    if (n>2) {
+        mp[n]++;
+        cout << n << " ";
+    }
+    cout << "\n";
+    return mp;
+}
+
+/*
+    Desc: Returns a vector of all prime factors of n
+
+    Parameters:
+        n: Number to be factored
+
+    Return value: vector of all prime values of n in order to least to greatest
+*/
+vector<unsigned long long> findFactorsVec(unsigned long long n) {
+    vector<unsigned long long> rt;
+    while (n%2==0) {
+        cout << 2 << " ";
+        n/=2;
+        rt.push_back(2);
+    }
+
+    unsigned long long sqrtNum = sqrt(n);
+    for (unsigned long long i=3; i<sqrtNum; i+=2) {
+        if (n%i==0) {
+            cout << i << " ";
+            n/=i;
+            rt.push_back(i);
+        }
+    }
+
+    if (n>2) {
+        rt.push_back(n);
+        cout << n << " ";
+    }
+    cout << "\n";
+    return rt;
+}
 
 
-// unsigned long long sumPermutations (vector<int>& digits, int currSum, int prevSum, int index) {
+/*
+    Desc: Syncs up Core1.cpp with Core2.cpp(Core1.cpp cannot continue until Core2.cpp outputs ready to sync.txt)
 
-// }
+    Parameters:
+        None
 
-int main () {
-    //sync with core 2
-    clock_t timer = clock();
+    Return value: void
+*/
+void sync () {
     ifstream fin;
     string sync;
     
@@ -28,56 +98,61 @@ int main () {
         fin >> sync;
         fin.close();
     }
+    remove(syncFile.c_str());
+}
+
+int main () {
+    //sync with core 2
+    clock_t timer = clock();
+    sync();
     timer = clock() - timer;
     cout << "FINISHED SYNCING IN " << (float)timer/CLOCKS_PER_SEC << " SECONDS\n";
-    remove(syncFile.c_str());
 
     //calculate all factors
-    timer = clock();
-
-    unordered_map<int, int> factors;
-    while (num%2==0) {
-        cout << 2 << " ";
-        num/=2;
-        factors[2]++;
-    }
-
-    int sqrtNum = sqrt(num);
-    for (int i=3; i<sqrtNum; i+=2) {
-        if (num%i==0) {
-            cout << i << " ";
-            num/=i;
-            factors[i]++;
-        }
-    }
-
-    if (num>2) {
-        factors[num]++;
-        cout << num << " ";
-    }
-    cout << "\n";
+    timer = clock(); //start timer for calculating combined calculation
+    unordered_map<unsigned long long, int> factors = findFactorsMap(num1);
 
     //wait for data from core 2
-    sync="";
-    while (sync!="ready") {
-        fin.open(syncFile);
-        fin >> sync;
-        fin.close();
-    }
+    sync();
 
     //fetch data from core 2/combined calculation
+    ifstream fin;
     fin.open(dataFile);
-    int num;
+
+    unsigned long long temp;
     string s;
-    while (fin >> num) {
-        cout << num << " ";
-        if (factors.find(num)!=factors.end() && factors[num]>0) {
-            s+=to_string(num)+" ";
-            factors[num]--;
+    while (fin >> temp) {
+        cout << temp << " ";
+        if (factors.find(temp)!=factors.end() && factors[temp]>0) {
+            s+=to_string(temp)+" ";
+            factors[temp]--;
         }
     }
     cout << "\n" << s;
 
-    cout << "\nFINISHED COMBINED CALCULATION IN " << (float)(clock()-timer)/CLOCKS_PER_SEC << " SECONDS\n";
+    float timeParallel = (float)(clock()-timer)/CLOCKS_PER_SEC;
+    cout << "\nFINISHED COMBINED CALCULATION IN " << timeParallel << " SECONDS\n";
     remove(syncFile.c_str());
+
+
+    //series, running calculations one afer another instead of in parallel, compare times
+    //calculating for num1
+    timer = clock();
+    unordered_map<unsigned long long, int> factors2 = findFactorsMap(num1);
+    
+    //calculating for num 2
+    vector<unsigned long long> num2Factors = findFactorsVec(num2);
+
+    //combined calculation
+    for (auto i : num2Factors) {
+        if (factors2[i]>0) {
+            factors2[i]--;
+            cout << i << " ";
+        }
+    }
+    cout << "\n";
+
+    float timeSeries = (float)(clock() - timer)/CLOCKS_PER_SEC;
+    cout << "TIME IN PARALLEL: " << timeParallel << "\nTIME IN SERIES: " << timeSeries << "\nTIME DIFFERENCE(series-parallel): " << timeSeries-timeParallel << endl;
+    cout << "PERCENT SPEED DIFFERENCE ((SERIES-PARALLEL)/PARALLEL): " << 100*(timeSeries-timeParallel)/timeParallel << "%\n";
 }
