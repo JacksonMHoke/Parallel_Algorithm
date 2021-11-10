@@ -8,7 +8,7 @@ using namespace std;
 
 static string syncFile = "sync.txt";
 static string dataFile = "data.txt";
-unsigned long long num = 12312123421342521200;
+unsigned long long num = 123121234200000;
 
 /*
     Desc: Returns a vector of all prime factors of n
@@ -39,17 +39,24 @@ vector<unsigned long long> findFactorsVec(unsigned long long n) {
     return rt;
 }
 
-int main () {
+int main (int argc, char* argv[]) {
+    cout << "Core2 ran\n";
+    string pc;
+    //if there was a command line input, set num to that input
+    if (argc==3) {
+        num=stoull(argv[1]);
+        pc = argv[2];
+    }
+
     //sync with core1
-    ofstream fout(syncFile);
+    ofstream fout(pc+syncFile);
     fout << "ready";
     fout.close();
     //calculate
     vector<unsigned long long> data = findFactorsVec(num);
 
     //upload results to csv1
-    remove(dataFile.c_str());
-    fout.open(dataFile);
+    fout.open(pc+dataFile);
     for (unsigned long long i : data) {
         fout << i << " ";
     }
@@ -57,7 +64,7 @@ int main () {
     fout.close();
 
     //sync with core1
-    fout.open(syncFile);
+    fout.open(pc+syncFile);
     fout << "ready";
     fout.close();
 }

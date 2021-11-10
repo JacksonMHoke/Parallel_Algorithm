@@ -10,8 +10,8 @@ using namespace std;
 
 static string syncFile = "sync.txt";
 static string dataFile = "data.txt";
-unsigned long long num1 = 12312123421342521200;
-unsigned long long num2 = 12312123421342521200;
+unsigned long long num1 = 123121234200000;
+unsigned long long num2 = 123121234200000;
 
 /*
     Desc: Outputs an unordered_map<unsigned long long, int> of all the frequencies of prime factors in n. Ex: 49 will have
@@ -89,22 +89,29 @@ vector<unsigned long long> findFactorsVec(unsigned long long n) {
 
     Return value: void
 */
-void sync () {
+void sync (string pc) {
     ifstream fin;
     string sync;
-    
     while (sync!="ready") {
-        fin.open(syncFile);
+        fin.open(pc+syncFile);
         fin >> sync;
         fin.close();
     }
-    remove(syncFile.c_str());
+    remove((pc+syncFile).c_str());
 }
 
-int main () {
+int main (int argc, char* argv[]) {
+    string pc;
+    //check if arguments are passed in
+    if (argc == 4) {
+        num1=stoull(argv[1]);
+        num2=stoull(argv[2]);
+        pc = argv[3];
+    }
+
     //sync with core 2
     clock_t timer = clock();
-    sync();
+    sync(pc);
     timer = clock() - timer;
     cout << "FINISHED SYNCING IN " << (float)timer/CLOCKS_PER_SEC << " SECONDS\n";
 
@@ -113,11 +120,11 @@ int main () {
     unordered_map<unsigned long long, int> factors = findFactorsMap(num1);
 
     //wait for data from core 2
-    sync();
+    sync(pc);
 
     //fetch data from core 2/combined calculation
     ifstream fin;
-    fin.open(dataFile);
+    fin.open(pc+dataFile);
 
     unsigned long long temp;
     string s;
@@ -129,19 +136,25 @@ int main () {
         }
     }
     cout << "\n" << s;
+    fin.close();
 
     float timeParallel = (float)(clock()-timer)/CLOCKS_PER_SEC;
     cout << "\nFINISHED COMBINED CALCULATION IN " << timeParallel << " SECONDS\n";
-    remove(syncFile.c_str());
+    remove((pc+dataFile).c_str());
 
 
     //series, running calculations one afer another instead of in parallel, compare times
     //calculating for num1
-    timer = clock();
+    timer = clock(); //timer for series calculation
+
+    clock_t timerNum1 = clock();
     unordered_map<unsigned long long, int> factors2 = findFactorsMap(num1);
-    
+    float timeNum1=float(clock()-timerNum1)/CLOCKS_PER_SEC;
+
     //calculating for num 2
+    clock_t timerNum2 = clock();
     vector<unsigned long long> num2Factors = findFactorsVec(num2);
+    float timeNum2=float(clock()-timerNum2)/CLOCKS_PER_SEC;
 
     //combined calculation
     for (auto i : num2Factors) {
@@ -152,7 +165,14 @@ int main () {
     }
     cout << "\n";
 
+    //outputs times for both parallel and series and compares them
     float timeSeries = (float)(clock() - timer)/CLOCKS_PER_SEC;
     cout << "TIME IN PARALLEL: " << timeParallel << "\nTIME IN SERIES: " << timeSeries << "\nTIME DIFFERENCE(series-parallel): " << timeSeries-timeParallel << endl;
     cout << "PERCENT SPEED DIFFERENCE ((SERIES-PARALLEL)/PARALLEL): " << 100*(timeSeries-timeParallel)/timeParallel << "%\n";
+
+    //outputs time to calculate in parallel, in series, and both numbers separately
+    ofstream fout("time.csv", ios_base::app);
+    //parallel time, series time, num1 time, num2 time
+    fout << timeParallel << "," << timeSeries << "," << timeNum1 << "," << timeNum2 << "\n";
+    fout.close();
 }
