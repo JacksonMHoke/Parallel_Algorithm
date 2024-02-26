@@ -14,7 +14,7 @@ in that class.
 
 It was implemented using 2 cpp files, core1 and core2. Core1 is the main core, while core2 is a supplemental calculator to run in parallel to core1. First you run core1, which
 will wait until core2 outputs a file with "ready" in it, and then run core2. This lets both "cores" start their calculations at the same time. Once core2 finishes their calculations, they output it
-to a file and core1 reads those while printing out the shared factors between their two separate calculations. Fianlly I ran the series computation on core1 and compared the times
+to a file and core1 reads those while printing out the shared factors between their two separate calculations. Finally I ran the series computation on core1 and compared the times
 taken to calculate.
 
 ## Graphs
